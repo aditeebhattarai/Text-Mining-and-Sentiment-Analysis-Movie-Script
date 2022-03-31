@@ -1,4 +1,6 @@
 ########### Text Pre-Processing ##########
+#### Text mining and Analysis on the Movie Reviews for Harry Potter and the Chamber of Secrets. Reviews taken from Rotten Tomatoes and Meta Critic####
+
 
 ######## load packages #######
 
@@ -55,7 +57,7 @@ scripts <- scripts %>% mutate(Reviews_noPunctuation = gsub('[[:punct:]]','',Revi
 head(scripts)
 
 
-###### remove whitespace #######
+###### remove whitespace ########
 scripts <- scripts %>% mutate(Reviews_noSpaces = gsub('\\s+',' ',Reviews_noPunctuation))
 head(scripts)
 
