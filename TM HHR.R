@@ -1,30 +1,9 @@
-#########################################################################################
-################################## Text Pre-Processing ##################################
-#########################################################################################
+####################### Text Pre-Processing ##################################
 
-# In the code below, we will go through the typical steps to pre-process/ clean text
-# These are just guidelines. Depending on what text is used an input, there might be a need to
-    # make slight changes to these pre-processing functions
-# These are the thechniques covered in this notebook:
-    # 1. Bring to lower case
-    # 2. Remove numbers
-    # 3. Remove stopwords 
-    # 4. Remove punctuation 
-    # 5. Remove/ change certain words
-    # 6. Remove white space
-    # 7. Lemmatization / Stemming
-# Other techniques could be applied to text as well. For example, if you work with social media data,
-    # you might want to remove tags and URLs from text. 
-# After cleaning the data, let's transform it to:
-    # DTM = Document Term Matrix
-    # TDM = Term Document Matrix
-    # Tf-Idf = Term Frequency-Inverse Document Frequency 
+# In the code below, we will go through the typical steps to pre-process/ clean text for our Movie Script
 
-
-##############################
 ######## load packages #######
-##############################
-# if the packages below are not installed, then uncomment the install.packages() lines and run them
+
 #install.packages("dplR")
 #install.packages("tm")
 #install.packages("textstem")
@@ -32,50 +11,34 @@ library(dplyr) # dplyr package is used for data manipulation; it uses pipes: %>%
 library(tm) # contains the stopwords dictionary
 library(textstem) # used for stemming and lemmatization
 
-##############################
 ##### read the data in R #####
-##############################
-# it's good practice to set up the working directory
-# all the files youo read in R or write from R will be in the working directory you set up
-# if you copy the path of your file from the foler, change all the \ to /
-#setwd("your folder path")
+
+#Set working directory from "session"
+
 scripts <- read.csv("HHR.csv")
 
-
-##############################
 ### check the type of data ###
-##############################
+
 str(scripts)
 head(scripts)
 
-
-# For each cleaning task, let's create a new column to see the before and after
-
-
-###############################
 ##### bring to lower case #####
-###############################
+
 # Text normalization allows words like "Something" and "something" be treated in the same way.
-# You would usually transform all the words to lower case. 
-# However, there might be times you don't wish to do so. 
-# Ex: "US" and "us" mean different things and should remain as they are.
+
 scripts <- scripts %>% mutate(Dialogue_lower = tolower(Dialogue)) # mutate() function is from the dplyr package and it is used to create a new column
 scripts <- scripts %>% mutate(Sentiment_lower = tolower(Sentiment))
 head(scripts)
 
-###############################
 ####### remove numbers ########
-###############################
+
 # this function looks for any number in the text and then removes it
-# if desired to replace the numbers with a space, add a space inside the quotes: ' ' instead of ''
-# [[:digit:]] is a regex expresion. Read more here: https://rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf
-#scripts <- scripts %>% mutate(Narrative_noNumbers = gsub('[[:digit:]]','',Narrative_lower)) # gsub functoin searches for any digit in the text and removes it; 
-#(scripts)
+scripts <- scripts %>% mutate(Narrative_noNumbers = gsub('[[:digit:]]','',Narrative_lower)) # gsub functoin searches for any digit in the text and removes it; 
+(scripts)
 
 
-###############################
 ###### remove stopwords #######
-###############################
+
 # Stop words are the words that appear the most in the English vocabulary ("a", "the", "for).
 # These don't provide important meaning and are therefore removed.
 # R already provides packages that contain a collection of stopwords
@@ -97,26 +60,23 @@ scripts <- scripts %>% mutate(Dialogue_noStopWords = gsub(stopwords_regex,'',Dia
 head(scripts)
 
 
-###############################
 ##### remove punctuation ######
-###############################
+
 # Punctuation (.,!?:;), symbols (*^&) are removed, unless there is a reason to keep them
 scripts <- scripts %>% mutate(Dialogue_noPunctuation = gsub('[[:punct:]]','',Dialogue_noStopWords))
 head(scripts)
 
 
-################################
-# remove/ change certain words #
-################################
+#### remove/ change certain words ####
+
 # Replace words that have typos with the correct words. If synonyms are present, these can be replaced as well.
 # Example of fixing a typo
 #scripts <-scripts %>% mutate(Narrative_noTypos = gsub('thankssssssss','thanks',Narrative_noPunctuation))
 #head(scripts)
 
 
-################################
 ###### remove whitespace #######
-################################
+
 # Remove extra white space (this would include space, tab, vertical tab, newline, form feed, carriage return):
 scripts <- scripts %>% mutate(Dialogue_noSpaces = gsub('\\s+',' ',Dialogue_noPunctuation))
 head(scripts)
@@ -126,19 +86,14 @@ head(scripts)
 # Stemming and Lemmatization are techniques to reduce the number of terms based on grammatical inflections.
   # Stemming removes the end of a words to bring the words to a common base form.
   # Lemmatization removes a word's suffix to reduce the size of the vocabulary while bringing it to its root form.
-  # When doing text minening, you would use either stemming either lemmatization
 
-################################
 ########### stemming ###########
-################################
 #scripts <-scripts %>% mutate(Narrative_Stem = stem_strings(Narrative_noSpaces))
 #head(scripts)
 
 scripts <- scripts %>% filter(Sentiment!= "")
 
-################################
 ######## lemmatization #########
-################################
 scripts <-scripts %>% mutate(Dialogue_Lemma = lemmatize_strings(Dialogue_noSpaces))
 head(scripts)
 
@@ -148,13 +103,11 @@ head(scripts)
 # keep just the text column
 my_text <- scripts %>% select(Dialogue_Lemma)
 
-################################
 ########## create DTM ##########
-################################
+
 # To create a DTM, we need to change the data frame to a corpus. First, we need to have a data frame whose column names are doc_id and text.
 # doc_id represents the document/ line of text;
 # text represents the content; this is what will be used to create the DTM
-# https://www.rdocumentation.org/packages/tm/versions/0.7-6/topics/DataframeSource
 my_corpus <- my_text
 my_corpus <- my_corpus %>% rename(text = Dialogue_Lemma)  %>% mutate(doc_id = rownames(my_text))
 my_corpus <- Corpus(DataframeSource(my_corpus))  # transform the data frame into a corpus
@@ -166,16 +119,13 @@ my_dtm <- as.matrix(DocumentTermMatrix(my_corpus))
 str(my_dtm)
 
 
-################################
 ########## create TDM ##########
-################################
+
 my_tdm <- as.matrix(TermDocumentMatrix(my_corpus))
 str(my_tdm)
 
 
-################################
 ######### create Tf-Idf ########
-################################
 my_tfidf <- as.matrix(DocumentTermMatrix(my_corpus, control = list(weighting = weightTfIdf)))
 str(my_tfidf)
 
@@ -201,7 +151,7 @@ TextDoc <- VCorpus(x = VectorSource(scripts),
 TextDoc <- tm_map(TextDoc, removeWords, stopwords())
 #TextDoc
 
-#frequency
+###frequency#####
 
 # Build a term-document matrix
 TextDoc_dtm <- TermDocumentMatrix(TextDoc)
@@ -209,15 +159,15 @@ dtm_m <- as.matrix(TextDoc_dtm)
 # Sort by descending value of frequency
 dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
 dtm_d <- data.frame(word = names(dtm_v),freq=dtm_v)
-# Display the top 5 most frequent words
+###### Display the top 5 most frequent words######
 head(dtm_d, 5)
 
-# Plot the most frequent words
+#######Plot the most frequent words######
 barplot(dtm_d[1:5,]$freq, las = 2, names.arg = dtm_d[1:5,]$word,
         col ="coral2", main ="Top 5 Sentiments Among The Trio",
         ylab = "Sentiment Frequencies")
 
-#generate word cloud
+#####generate word cloud#######
 set.seed(1234)
 wordcloud(words = dtm_d$word, freq = dtm_d$freq, min.freq = 5,
           max.words=50, random.order=FALSE, rot.per=0.40, 
