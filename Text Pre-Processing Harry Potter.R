@@ -1,41 +1,13 @@
-#########################################################################################
-################################## Text Pre-Processing ##################################
-#########################################################################################
-
-# In the code below, we will go through the typical steps to pre-process/ clean text
-# These are just guidelines. Depending on what text is used an input, there might be a need to
-    # make slight changes to these pre-processing functions
-# These are the thechniques covered in this notebook:
-    # 1. Bring to lower case
-    # 2. Remove numbers
-    # 3. Remove stopwords 
-    # 4. Remove punctuation 
-    # 5. Remove/ change certain words
-    # 6. Remove white space
-    # 7. Lemmatization / Stemming
-# Other techniques could be applied to text as well. For example, if you work with social media data,
-    # you might want to remove tags and URLs from text. 
-# After cleaning the data, let's transform it to:
-    # DTM = Document Term Matrix
-    # TDM = Term Document Matrix
-    # Tf-Idf = Term Frequency-Inverse Document Frequency 
+###### Text Mining and Sentiment Analysis on the movie script of Harry Potter and the Chamber of Secrets#####
+############### Text Pre-Processing ################
 
 
-##############################
 ######## load packages #######
-##############################
-# if the packages below are not installed, then uncomment the install.packages() lines and run them
-#install.packages("dplR")
-#install.packages("tm")
-#install.packages("textstem")
-#install.packages("tidyversy")
 library(dplyr) # dplyr package is used for data manipulation; it uses pipes: %>%
 library(tm) # contains the stopwords dictionary
 library(textstem) # used for stemming and lemmatization
 library(tidyverse)      # data manipulation & plotting
 library(stringr)        # text cleaning and regular expressions
-#install.packages("tidytext")
-#install.packages("textdata")
 library(textdata)
 library(tidytext)       # provides additional text mining functions
 library(textclean) # Text Cleaning Tools
@@ -44,34 +16,17 @@ library(textclean) # Text Cleaning Tools
 #library(wordcloud)
 #library(wordcloud2)
 
-##############################
+
 ##### read the data in R #####
-##############################
-# it's good practice to set up the working directory
-# all the files youo read in R or write from R will be in the working directory you set up
-# if you copy the path of your file from the foler, change all the \ to /
-#setwd("your folder path")
 scripts <- read.csv("HPWorkingFile.csv")
 
-
-##############################
 ### check the type of data ###
-##############################
 str(scripts)
-
 head(scripts)
 
 
-# For each cleaning task, let's create a new column to see the before and after
 
-
-###############################
 ##### bring to lower case #####
-###############################
-# Text normalization allows words like "Something" and "something" be treated in the same way.
-# You would usually transform all the words to lower case. 
-# However, there might be times you don't wish to do so. 
-# Ex: "US" and "us" mean different things and should remain as they are.
 scripts <- scripts %>% mutate(Sentiment_lower = tolower(Sentiment)) # mutate() function is from the dplyr package and it is used to create a new column
 head(scripts)
 scripts <- scripts %>% mutate(Dialogue_lower = tolower(Dialogue))
@@ -79,22 +34,11 @@ scripts <- scripts %>% mutate(Speaker_lower = tolower(Speaker))
 scripts <- scripts %>% mutate(Listener_lower = tolower(Listener))
 head(scripts)
 
-###############################
 ####### remove numbers ########
-###############################
-# this function looks for any number in the text and then removes it
-# if desired to replace the numbers with a space, add a space inside the quotes: ' ' instead of ''
-# [[:digit:]] is a regex expresion. Read more here: https://rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf
 scripts <- scripts %>% mutate(Dialogue_noNumbers = gsub('[[:digit:]]',' ',Dialogue_lower)) # gsub functoin searches for any digit in the text and removes it; 
 head(scripts)
 
-
-###############################
 ###### remove stopwords #######
-###############################
-# Stop words are the words that appear the most in the English vocabulary ("a", "the", "for).
-# These don't provide important meaning and are therefore removed.
-# R already provides packages that contain a collection of stopwords
 # English stopwords
 stopwords('en')
 # Check the structure of the stopwords dictionary
@@ -103,27 +47,17 @@ str(stopwords('en')) # it is a vector in character format
 stopwords('en')[1:10]
 # remove certain stopwords
 stopwords('en')[!stopwords('en') %in% c('i')]  # notice that the first stopword, i, was removed
-    # stopwords('en') %in% c('i') ---> this gives back a vector with TRUE and FALSE
-    # ! ---> this gives negation
 # Add new stopwords
-#c(stopwords('en'), "under")  # notice that the stopwords have a new element: under
-# Remove the stopwords from text; If you wish to modify the stopwords dictionary by adding/ removing any, then use code from above
 stopwords_regex = paste(stopwords('en'), collapse = '\\b|\\b')
 scripts <- scripts %>% mutate(Dialogue_noStopWords = gsub(stopwords_regex,' ',Dialogue_noNumbers))
 head(scripts)
 
-
-###############################
 ##### remove punctuation ######
-###############################
-# Punctuation (.,!?:;), symbols (*^&) are removed, unless there is a reason to keep them
 scripts <- scripts %>% mutate(Dialogue_noPunctuation = gsub('[[:punct:]]','',Dialogue_noStopWords))
 head(scripts)
 
 
-################################
-# remove/ change certain words #
-################################
+#### remove/ change certain words ######
 # Replace words that have typos with the correct words. If synonyms are present, these can be replaced as well.
 # Example of fixing a typo
 scripts <-scripts %>% mutate(Dialogue_noTypos = gsub('harri','harry',Dialogue_noPunctuation))
